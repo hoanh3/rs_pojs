@@ -30,9 +30,11 @@ from django.utils.translation import gettext as _, gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from reversion import revisions
+from django.contrib import messages
+from django.shortcuts import redirect
 
-from judge.forms import CustomAuthenticationForm, DownloadDataForm, EmailChangeForm, ProfileForm, newsletter_id
-from judge.models import Profile, Submission
+from judge.forms import CustomAuthenticationForm, DownloadDataForm, EmailChangeForm, ProfileForm, newsletter_id, SurveyForm
+from judge.models import Profile, Submission, Survey
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
 from judge.tasks import prepare_user_data
@@ -227,6 +229,45 @@ class UserProblemsPage(UserPage):
 
         return context
 
+class UserSurveyPage(UserPage):
+    template_name = 'user/user-survey.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(UserSurveyPage, self).get_context_data(**kwargs)
+        survey_questions = [
+            {
+                'id': 1,
+                'text': 'Bạn thành thạo ngôn ngữ lập trình nào nhất?',
+                'options': [
+                    {'id': 1, 'text': 'Python'},
+                    {'id': 2, 'text': 'JavaScript'},
+                    {'id': 3, 'text': 'Java'},
+                    {'id': 4, 'text': 'C++'},
+                    {'id': 5, 'text': 'Khác'},
+                ]
+            },
+            {
+                'id': 2,
+                'text': 'Bạn có bao nhiêu kinh nghiệm lập trình?',
+                'options': [
+                    {'id': 6, 'text': 'Dưới 1 năm'},
+                    {'id': 7, 'text': '1-3 năm'},
+                    {'id': 8, 'text': 'Trên 3 năm'},
+                ]
+            },
+            {
+                'id': 3,
+                'text': 'Mục đích sử dụng hệ thống của bạn là gì?',
+                'options': [
+                    {'id': 9, 'text': 'Làm quen ngôn ngữ mới'},
+                    {'id': 10, 'text': 'Luyện tập kỹ năng'},
+                ]
+            },
+        ]
+        context['data'] = "tran hoan"
+        context['tab'] = "survey"
+        context['survey_questions'] = survey_questions
+        return context
 
 class UserPerformancePointsAjax(UserProblemsPage):
     template_name = 'user/pp-table-body.html'
@@ -346,6 +387,35 @@ class UserDownloadData(LoginRequiredMixin, UserDataMixin, View):
         response['Content-Disposition'] = 'attachment; filename=%s-data.zip' % self.request.user.username
         return response
 
+@login_required
+def edit_survey(request):
+    if request.profile.mute:
+        return generic_message(request, _("Can't edit profile"), _('Your part is silent, little toad.'), status=403)
+    if request.method == 'POST':
+        survey_instance, created = Survey.objects.get_or_create(user=request.user.profile)
+        form = SurveyForm(request.POST, instance=survey_instance, user=request.user)
+        if not form.is_valid():
+            print(form.errors)
+        if form.is_valid():
+            with revisions.create_revision(atomic=True):
+                print("hello world")
+                form.save()
+                revisions.set_user(request.user)
+                revisions.set_comment(_('Updated on site'))
+
+            return HttpResponseRedirect(request.path)
+    else:
+        survey_instance, created = Survey.objects.get_or_create(user=request.user.profile)
+        form = SurveyForm(instance=survey_instance, user=request.user)
+
+    return render(request, 'user/edit-survey.html', {
+        'require_staff_2fa': settings.DMOJ_REQUIRE_STAFF_2FA,
+        'form': form, 'title': _('Survey'), 'profile': request.profile,
+        'can_download_data': bool(settings.DMOJ_USER_DATA_DOWNLOAD),
+        'has_math_config': bool(settings.MATHOID_URL),
+        'ignore_user_script': True,
+        'TIMEZONE_MAP': settings.TIMEZONE_MAP,
+    })
 
 @login_required
 def edit_profile(request):

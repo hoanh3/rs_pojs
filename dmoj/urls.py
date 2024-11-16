@@ -163,6 +163,7 @@ urlpatterns = [
 
     path('user', user.UserAboutPage.as_view(), name='user_page'),
     path('edit/profile/', user.edit_profile, name='user_edit_profile'),
+    path('submit/survey/', user.edit_survey, name='user_submit_survey'),
     path('data/prepare/', user.UserPrepareData.as_view(), name='user_prepare_data'),
     path('data/download/', user.UserDownloadData.as_view(), name='user_download_data'),
     path('user/<str:user>', include([
@@ -170,6 +171,9 @@ urlpatterns = [
         path('/solved', include([
             path('', user.UserProblemsPage.as_view(), name='user_problems'),
             path('/ajax', user.UserPerformancePointsAjax.as_view(), name='user_pp_ajax'),
+        ])),
+        path('/survey', include([
+            path('', user.UserSurveyPage.as_view(), name='user_survey'),
         ])),
         path('/submissions/', paged_list_view(submission.AllUserSubmissions, 'all_user_submissions_old')),
         path('/submissions/', lambda _, user:

@@ -1,0 +1,37 @@
+{% extends "user/user-base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'survey' %}
+    {% include "user/user-tabs.html" %}
+{% endblock %}
+
+{% block user_content %}
+    {% if 1 == 1 %}
+        <div class="survey-section">
+            <h3>{{ _('Survey Questions') }}</h3>
+            <form id="survey-form" method="post" action="">
+                {% csrf_token %}
+    
+                {% for question in survey_questions %}
+                <div class="survey-question">
+                    <p><b>{{ question.text }}</b></p>
+                    <ul>
+                        {% for option in question.options %}
+                        <li>
+                            <label>
+                                <input type="radio" name="question_{{ question.id }}" value="{{ option.id }}">
+                                {{ option.text }}
+                            </label>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+    
+                <button type="submit" class="btn btn-primary">{{ _('Submit Survey') }}</button>
+            </form>
+        </div>
+    {% endif %}
+{% endblock %}

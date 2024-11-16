@@ -13,6 +13,7 @@ from judge.models.problem_data import CHECKERS, ProblemData, ProblemTestCase, pr
 from judge.models.profile import Class, Organization, OrganizationRequest, Profile, WebAuthnCredential
 from judge.models.runtime import Judge, Language, RuntimeVersion
 from judge.models.submission import SUBMISSION_RESULT, Submission, SubmissionSource, SubmissionTestCase
+from judge.models.survey import Survey
 from judge.models.ticket import Ticket, TicketMessage
 
 revisions.register(Profile, exclude=['points', 'last_access', 'ip', 'rating'])

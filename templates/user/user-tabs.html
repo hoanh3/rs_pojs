@@ -14,5 +14,6 @@
     {% endif %}
     {% if user.user == request.user %}
         {{ make_tab('edit', 'fa-edit', url('user_edit_profile'), _('Edit profile')) }}
+        {{ make_tab('survey', 'fa-edit', url('user_submit_survey'), _('Survey')) }}
     {% endif %}
 {% endblock %}

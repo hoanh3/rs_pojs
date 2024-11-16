@@ -6219,3 +6219,17 @@ msgstr "Hồ sơ Admin"
 msgid "Check all"
 msgstr "Chọn tất cả"
 
+msgid "Survey"
+msgstr "Khảo sát"
+
+msgid "Survey Questions"
+msgstr "Câu hỏi khảo sát"
+
+msgid "Which programming language are you most proficient in?"
+msgstr "Bạn thành thạo ngôn ngữ lập trình nào nhất?"
+
+msgid "How much programming experience do you have?"
+msgstr "Bạn có bao nhiêu kinh nghiệm lập trình?"
+
+msgid "What is your intended use of the system?"
+msgstr "Mục đích sử dụng hệ thống của bạn là gì?"

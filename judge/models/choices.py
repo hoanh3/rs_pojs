@@ -71,3 +71,22 @@ SITE_THEMES = (
     ('light', _('Light')),
     ('dark', _('Dark')),
 )
+
+LANGUAGE_CHOICES = [
+    (1, 'Python'),
+    (2, 'JavaScript'),
+    (3, 'Java'),
+    (4, 'C++'),
+    (5, 'Khác'),
+]
+
+EXPERIENCE_CHOICES = [
+    (1, 'Dưới 1 năm'),
+    (2, '1-3 năm'),
+    (3, 'Trên 3 năm'),
+]
+
+PURPOSE_CHOICES = [
+    (1, 'Làm quen ngôn ngữ mới'),
+    (2, 'Luyện tập kỹ năng'),
+]

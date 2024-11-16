@@ -16,7 +16,7 @@ from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
 from django_ace import AceWidget
-from judge.models import Contest, Language, Organization, Problem, ProblemPointsVote, Profile, Submission, \
+from judge.models import Contest, Survey, Language, Organization, Problem, ProblemPointsVote, Profile, Submission, \
     WebAuthnCredential
 from judge.utils.mail import validate_email_domain
 from judge.utils.subscription import newsletter_id
@@ -316,3 +316,18 @@ class ProblemPointsVoteForm(ModelForm):
     class Meta:
         model = ProblemPointsVote
         fields = ['points', 'note']
+
+
+class SurveyForm(ModelForm):
+    class Meta:
+        model = Survey
+        fields = ['language', 'experience', 'purpose']
+        widgets = {
+            'language': forms.RadioSelect,
+            'experience': forms.RadioSelect,
+            'purpose': forms.RadioSelect,
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(SurveyForm, self).__init__(*args, **kwargs)
