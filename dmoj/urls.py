@@ -100,6 +100,7 @@ urlpatterns = [
     path('', include('social_django.urls')),
 
     path('problems/', problem.ProblemList.as_view(), name='problem_list'),
+    path('recommendations/', problem.ProblemRecommendationList.as_view(), name='problem_recommend'),
     path('problems/random/', problem.RandomProblem.as_view(), name='problem_random'),
 
     path('problem/<str:problem>', include([
