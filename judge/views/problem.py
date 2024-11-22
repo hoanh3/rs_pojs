@@ -14,7 +14,7 @@ from django.db.models import BooleanField, Case, CharField, Count, F, FilteredRe
 from django.db.models.functions import Coalesce
 from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils import timezone, translation
@@ -29,7 +29,7 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import ProblemCloneForm, ProblemPointsVoteForm, ProblemSubmitForm
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, ProblemPointsVote, \
-    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
+    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource, SubmissionTestCase
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
@@ -815,6 +815,62 @@ class RandomProblem(ProblemList):
                                                     request.META['QUERY_STRING']))
         return HttpResponseRedirect(queryset[randrange(count)].get_absolute_url())
 
+def fake_problem_submit(request, problem):
+    # Lấy giá trị 'result' từ query parameters
+    result = request.GET.get('result')
+    if not result:
+        # Nếu không có 'result', có thể xử lý lỗi hoặc đặt giá trị mặc định
+        result = 'AC'  # Giá trị mặc định
+
+    # Lấy đối tượng Problem tương ứng với 'problem'
+    try:
+        p = Problem.objects.get(code=problem)
+    except Problem.DoesNotExist:
+        # Xử lý lỗi nếu không tìm thấy problem
+        return None
+    
+    if result == 'AC':
+        p
+
+    # Lấy người dùng hiện tại
+    user = request.user.profile  # Giả sử bạn có mô hình Profile liên kết với User
+
+    # Lấy một ngôn ngữ mặc định hoặc ngẫu nhiên
+    language = Language.objects.first()  # Lấy ngôn ngữ đầu tiên trong database
+
+    judge = Judge.objects.first()
+    
+    testcase = randrange(4, 10)
+    
+    # Tạo một Submission mới với các trường cần thiết
+    new_submission = Submission.objects.create(
+        user=user,
+        problem=p,
+        date=timezone.now(),
+        time=1.02141281,  # Giá trị mặc định
+        memory=11452,  # Giá trị mặc định
+        points=p.points if result == "AC" else 0,  # Giá trị mặc định
+        language=language,
+        status='D',  # Đặt trạng thái là 'Completed'
+        result=result,
+        judged_date=timezone.now(),
+        judged_on=judge,
+        # Các trường khác nếu cần
+    )
+    
+    for i in range(1, testcase):
+        SubmissionTestCase.objects.create(
+            case=i,
+            status="AC" if result == "AC" else "WA",
+            submission=new_submission,
+            time=0.895847708,
+            memory=11452,
+            points=1,
+            total=1,
+        )
+
+    # Chuyển hướng đến trang khác, ví dụ trang chi tiết submission
+    return redirect('submission_status', submission=new_submission.id)
 
 user_logger = logging.getLogger('judge.user')
 

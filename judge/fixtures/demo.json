@@ -73,11 +73,210 @@
     },
     {
         "fields": {
+            "full_name": "Array",
+            "name": "Array"
+        },
+        "model": "judge.problemtype",
+        "pk": 2
+    },
+    {
+        "fields": {
+            "full_name": "String",
+            "name": "String"
+        },
+        "model": "judge.problemtype",
+        "pk": 3
+    },
+    {
+        "fields": {
+            "full_name": "Tree",
+            "name": "Tree"
+        },
+        "model": "judge.problemtype",
+        "pk": 4
+    },
+    {
+        "fields": {
+            "full_name": "Graph",
+            "name": "Graph"
+        },
+        "model": "judge.problemtype",
+        "pk": 5
+    },
+    {
+        "fields": {
+            "full_name": "Sorting",
+            "name": "Sorting"
+        },
+        "model": "judge.problemtype",
+        "pk": 6
+    },
+    {
+        "fields": {
+            "full_name": "Stack",
+            "name": "Stack"
+        },
+        "model": "judge.problemtype",
+        "pk": 7
+    },{
+        "fields": {
+            "full_name": "Hash Table",
+            "name": "Hash Table"
+        },
+        "model": "judge.problemtype",
+        "pk": 8
+    },
+    {
+        "fields": {
+            "full_name": "Dynamic Programming",
+            "name": "Dynamic Programming"
+        },
+        "model": "judge.problemtype",
+        "pk": 9
+    },
+    {
+        "fields": {
+            "full_name": "Math",
+            "name": "Math"
+        },
+        "model": "judge.problemtype",
+        "pk": 10
+    },
+    {
+        "fields": {
+            "full_name": "Greedy",
+            "name": "Greedy"
+        },
+        "model": "judge.problemtype",
+        "pk": 11
+    },
+    {
+        "fields": {
+            "full_name": "Depth-First Search",
+            "name": "Depth-First Search"
+        },
+        "model": "judge.problemtype",
+        "pk": 12
+    },
+    {
+        "fields": {
+            "full_name": "Database",
+            "name": "Database"
+        },
+        "model": "judge.problemtype",
+        "pk": 13
+    },
+    {
+        "fields": {
+            "full_name": "Binary Search",
+            "name": "Binary Search"
+        },
+        "model": "judge.problemtype",
+        "pk": 14
+    },
+    {
+        "fields": {
+            "full_name": "Matrix",
+            "name": "Matrix"
+        },
+        "model": "judge.problemtype",
+        "pk": 15
+    },
+    {
+        "fields": {
+            "full_name": "Breadth-First Search",
+            "name": "Breadth-First Search"
+        },
+        "model": "judge.problemtype",
+        "pk": 16
+    },
+    {
+        "fields": {
+            "full_name": "Bit Manipulation",
+            "name": "Bit Manipulation"
+        },
+        "model": "judge.problemtype",
+        "pk": 17
+    },
+    {
+        "fields": {
+            "full_name": "Two Pointers",
+            "name": "Two Pointers"
+        },
+        "model": "judge.problemtype",
+        "pk": 18
+    },
+    {
+        "fields": {
+            "full_name": "Prefix Sum",
+            "name": "Prefix Sum"
+        },
+        "model": "judge.problemtype",
+        "pk": 19
+    },
+    {
+        "fields": {
+            "full_name": "Heap (Priority Queue)",
+            "name": "Heap (Priority Queue)"
+        },
+        "model": "judge.problemtype",
+        "pk": 20
+    },
+    {
+        "fields": {
+            "full_name": "Binary Tree",
+            "name": "Binary Tree"
+        },
+        "model": "judge.problemtype",
+        "pk": 21
+    },
+    {
+        "fields": {
             "full_name": "Uncategorized",
             "name": "Uncategorized"
         },
         "model": "judge.problemgroup",
         "pk": 1
+    },
+    {
+        "fields": {
+            "full_name": "easy",
+            "name": "Easy"
+        },
+        "model": "judge.problemgroup",
+        "pk": 2
+    },
+    {
+        "fields": {
+            "full_name": "moderate",
+            "name": "Moderate"
+        },
+        "model": "judge.problemgroup",
+        "pk": 3
+    },
+    {
+        "fields": {
+            "full_name": "challenging",
+            "name": "Challenging"
+        },
+        "model": "judge.problemgroup",
+        "pk": 4
+    },
+    {
+        "fields": {
+            "full_name": "advanced",
+            "name": "Advanced"
+        },
+        "model": "judge.problemgroup",
+        "pk": 5
+    },
+    {
+        "fields": {
+            "full_name": "expert",
+            "name": "Expert"
+        },
+        "model": "judge.problemgroup",
+        "pk": 6
     },
     {
         "fields": {
