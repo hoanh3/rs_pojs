@@ -81,22 +81,6 @@
     },
     {
         "fields": {
-            "key": "about",
-            "label": "About",
-            "level": 0,
-            "lft": 1,
-            "order": 6,
-            "parent": null,
-            "path": "/about/",
-            "regex": "^/about/$",
-            "rght": 4,
-            "tree_id": 5
-        },
-        "model": "judge.navigationbar",
-        "pk": 6
-    },
-    {
-        "fields": {
             "key": "status",
             "label": "Status",
             "level": 1,
