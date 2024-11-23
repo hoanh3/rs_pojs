@@ -143,4 +143,19 @@ class RecommendationList:
         print(kUserNear)
         print(sUX)
         
-        return ["1"]
+        problemCode = set(k for k, v in self.M[self.user].items() if v == 1)
+        p_code = set(self.problems)
+        no_xp = p_code.difference(problemCode)
+        recProblem = {}
+
+        for p in no_xp:
+            wp = 0
+            for u, sim_value in kUserNear.items():
+                if self.M[u].get(p, 0) == 1:
+                    wp += sim_value 
+            recProblem[p] = wp
+
+        sortedRecProblem = dict(sorted(recProblem.items(), key=lambda item: item[1], reverse=True))
+        print(sortedRecProblem)
+        
+        return list(sortedRecProblem.keys())[:15]

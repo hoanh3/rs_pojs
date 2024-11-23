@@ -6,6 +6,7 @@ from operator import itemgetter
 from random import randrange
 from statistics import mean, median
 
+from django.core.cache import cache
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
@@ -29,7 +30,7 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import ProblemCloneForm, ProblemPointsVoteForm, ProblemSubmitForm
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, ProblemPointsVote, \
-    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource, SubmissionTestCase
+    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource, SubmissionTestCase, RecommendationData
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
@@ -816,46 +817,32 @@ class RandomProblem(ProblemList):
         return HttpResponseRedirect(queryset[randrange(count)].get_absolute_url())
 
 def fake_problem_submit(request, problem):
-    # Lấy giá trị 'result' từ query parameters
     result = request.GET.get('result')
     if not result:
-        # Nếu không có 'result', có thể xử lý lỗi hoặc đặt giá trị mặc định
-        result = 'AC'  # Giá trị mặc định
-
-    # Lấy đối tượng Problem tương ứng với 'problem'
+        result = 'AC'
+        
     try:
         p = Problem.objects.get(code=problem)
     except Problem.DoesNotExist:
-        # Xử lý lỗi nếu không tìm thấy problem
         return None
     
-    if result == 'AC':
-        p
-
-    # Lấy người dùng hiện tại
-    user = request.user.profile  # Giả sử bạn có mô hình Profile liên kết với User
-
-    # Lấy một ngôn ngữ mặc định hoặc ngẫu nhiên
-    language = Language.objects.first()  # Lấy ngôn ngữ đầu tiên trong database
-
+    user = request.user.profile
+    language = Language.objects.first()
     judge = Judge.objects.first()
-    
     testcase = randrange(4, 10)
     
-    # Tạo một Submission mới với các trường cần thiết
     new_submission = Submission.objects.create(
         user=user,
         problem=p,
         date=timezone.now(),
-        time=1.02141281,  # Giá trị mặc định
-        memory=11452,  # Giá trị mặc định
-        points=p.points if result == "AC" else 0,  # Giá trị mặc định
+        time=1.02141281,
+        memory=11452,
+        points=p.points if result == "AC" else 0,
         language=language,
-        status='D',  # Đặt trạng thái là 'Completed'
+        status='D',
         result=result,
         judged_date=timezone.now(),
         judged_on=judge,
-        # Các trường khác nếu cần
     )
     
     for i in range(1, testcase):
@@ -869,11 +856,29 @@ def fake_problem_submit(request, problem):
             total=1,
         )
 
-    # Chuyển hướng đến trang khác, ví dụ trang chi tiết submission
+    # update related info
+    p.update_stats()
+    key = 'user_complete:%d' % user.id
+    cache.delete(key)
+    
+    rec_data, created = RecommendationData.objects.get_or_create(
+        user=user,
+        problem=p,
+        defaults={
+            'number_of_attempt': 1,
+            'final_result': result,
+        }
+    )
+
+    if not created:
+        if rec_data.final_result != "AC":
+            rec_data.number_of_attempt += 1
+            rec_data.final_result = result
+            rec_data.save()
+
     return redirect('submission_status', submission=new_submission.id)
 
 user_logger = logging.getLogger('judge.user')
-
 
 class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFormView):
     template_name = 'problem/submit.html'
