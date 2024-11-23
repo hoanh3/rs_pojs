@@ -11,7 +11,7 @@ from registration.backends.default.views import (ActivationView as OldActivation
 from registration.forms import RegistrationForm
 from sortedm2m.forms import SortedMultipleChoiceField
 
-from judge.models import Language, Organization, Profile, TIMEZONE
+from judge.models import Language, Organization, Profile, TIMEZONE, Survey
 from judge.utils.mail import validate_email_domain
 from judge.utils.recaptcha import ReCaptchaField, ReCaptchaWidget
 from judge.utils.subscription import Subscription, newsletter_id
@@ -77,6 +77,8 @@ class RegistrationView(OldRegistrationView):
         profile.language = cleaned_data['language']
         profile.organizations.add(*cleaned_data['organizations'])
         profile.save()
+        
+        Survey.objects.create(user=profile)
 
         if newsletter_id is not None and cleaned_data['newsletter']:
             Subscription(user=user, newsletter_id=newsletter_id, subscribed=True).save()

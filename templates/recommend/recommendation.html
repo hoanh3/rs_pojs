@@ -120,13 +120,6 @@
         <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
             {{ _('Submit solution') }}
         </a>
-        <a href="{{ url('fake_problem_submit', problem.code) }}?result=AC">
-            {{ _('Submit AC') }}
-        </a>
-        |
-        <a href="{{ url('fake_problem_submit', problem.code) }}?result=WA">
-            {{ _('Submit WA') }}
-        </a>
     {% endif %}
 
     <hr style="padding-bottom: 0.3em">

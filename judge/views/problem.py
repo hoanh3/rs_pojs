@@ -6,6 +6,7 @@ from operator import itemgetter
 from random import randrange
 from statistics import mean, median
 
+from django.core.cache import cache
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
@@ -14,7 +15,7 @@ from django.db.models import BooleanField, Case, CharField, Count, F, FilteredRe
 from django.db.models.functions import Coalesce
 from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils import timezone, translation
@@ -29,7 +30,7 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import ProblemCloneForm, ProblemPointsVoteForm, ProblemSubmitForm
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, ProblemPointsVote, \
-    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
+    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource, SubmissionTestCase, RecommendationData
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
@@ -38,6 +39,7 @@ from judge.utils.problems import contest_attempted_ids, contest_completed_ids, h
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
 from judge.utils.tickets import own_ticket_filter
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
+from judge.views.recommend import RecommendationList
 
 recjk = re.compile(r'[\u2E80-\u2E99\u2E9B-\u2EF3\u2F00-\u2FD5\u3005\u3007\u3021-\u3029\u3038-\u303A\u303B\u3400-\u4DB5'
                    r'\u4E00-\u9FC3\uF900-\uFA2D\uFA30-\uFA6A\uFA70-\uFAD9\U00020000-\U0002A6D6\U0002F800-\U0002FA1D]')
@@ -586,6 +588,211 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
                 request.session.pop(key, None)
         return HttpResponseRedirect(request.get_full_path())
 
+class ProblemRecommendationList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView):
+    model = Problem
+    title = gettext_lazy('Recommendations')
+    context_object_name = 'problems'
+    template_name = 'recommend/list.html'
+    paginate_by = 50
+    sql_sort = frozenset(('points', 'ac_rate', 'user_count', 'code'))
+    manual_sort = frozenset(('name', 'group', 'solved', 'type', 'editorial'))
+    all_sorts = sql_sort | manual_sort
+    default_desc = frozenset(('points', 'ac_rate', 'user_count'))
+    default_sort = 'code'
+
+    def get_paginator(self, queryset, per_page, orphans=0,
+                      allow_empty_first_page=True, **kwargs):
+        paginator = DiggPaginator(queryset, per_page, body=6, padding=2, orphans=orphans,
+                                  count=queryset.values('pk').count() if not self.in_contest else None,
+                                  allow_empty_first_page=allow_empty_first_page, **kwargs)
+        if not self.in_contest:
+            queryset = queryset.add_i18n_name(self.request.LANGUAGE_CODE)
+            sort_key = self.order.lstrip('-')
+            if sort_key in self.sql_sort:
+                queryset = queryset.order_by(self.order, 'id')
+            elif sort_key == 'name':
+                queryset = queryset.order_by(self.order.replace('name', 'i18n_name'), 'id')
+            elif sort_key == 'group':
+                queryset = queryset.order_by(self.order + '__name', 'id')
+            elif sort_key == 'editorial':
+                queryset = queryset.order_by(self.order.replace('editorial', 'has_public_editorial'), 'id')
+            elif sort_key == 'solved':
+                if self.request.user.is_authenticated:
+                    profile = self.request.profile
+                    solved = user_completed_ids(profile)
+                    attempted = user_attempted_ids(profile)
+
+                    def _solved_sort_order(problem):
+                        if problem.id in solved:
+                            return 1
+                        if problem.id in attempted:
+                            return 0
+                        return -1
+
+                    queryset = list(queryset)
+                    queryset.sort(key=_solved_sort_order, reverse=self.order.startswith('-'))
+            elif sort_key == 'type':
+                if self.show_types:
+                    queryset = list(queryset)
+                    queryset.sort(key=lambda problem: problem.types_list[0] if problem.types_list else '',
+                                  reverse=self.order.startswith('-'))
+            paginator.object_list = queryset
+        return paginator
+
+    @cached_property
+    def profile(self):
+        if not self.request.user.is_authenticated:
+            return None
+        return self.request.profile
+
+    def get_normal_queryset(self):
+        filter = Q(is_public=True)
+        if not self.request.user.has_perm('see_organization_problem'):
+            org_filter = Q(is_organization_private=False)
+            if self.profile is not None:
+                org_filter |= Q(organizations__in=self.profile.organizations.all())
+            filter &= org_filter
+        if self.profile is not None:
+            filter = Problem.q_add_author_curator_tester(filter, self.profile)
+        queryset = Problem.objects.filter(filter).select_related('group').defer('description', 'summary')
+        if self.profile is not None and self.hide_solved:
+            queryset = queryset.exclude(id__in=Submission.objects
+                                        .filter(user=self.profile, result='AC', case_points__gte=F('case_total'))
+                                        .values_list('problem_id', flat=True))
+        if self.show_types:
+            queryset = queryset.prefetch_related('types')
+        queryset = queryset.annotate(has_public_editorial=Case(
+            When(solution__is_public=True, solution__publish_on__lte=timezone.now(), then=True),
+            default=False,
+            output_field=BooleanField(),
+        ))
+        if self.has_public_editorial:
+            queryset = queryset.filter(has_public_editorial=True)
+        if self.category is not None:
+            queryset = queryset.filter(group__id=self.category)
+        if self.full_code is not None:
+            # full_code is a list of codes
+            queryset = queryset.filter(id__in=self.full_code)
+        if self.selected_types:
+            queryset = queryset.filter(types__in=self.selected_types)
+        if 'search' in self.request.GET:
+            self.search_query = query = ' '.join(self.request.GET.getlist('search')).strip()
+            if query:
+                queryset = queryset.filter(
+                    Q(code__icontains=query) | Q(name__icontains=query) |
+                    Q(translations__name__icontains=query, translations__language=self.request.LANGUAGE_CODE))
+        self.prepoint_queryset = queryset
+        if self.point_start is not None:
+            queryset = queryset.filter(points__gte=self.point_start)
+        if self.point_end is not None:
+            queryset = queryset.filter(points__lte=self.point_end)
+        return queryset.distinct()
+
+    def get_queryset(self):
+        return self.get_normal_queryset()
+
+    def get_context_data(self, **kwargs):
+        context = super(ProblemRecommendationList, self).get_context_data(**kwargs)
+        context['hide_solved'] = 0 if self.in_contest else int(self.hide_solved)
+        context['show_types'] = 0 if self.in_contest else int(self.show_types)
+        context['has_public_editorial'] = 0 if self.in_contest else int(self.has_public_editorial)
+        context['full_text'] = 0 if self.in_contest else int(self.full_text)
+        context['category'] = self.category
+        context['categories'] = ProblemGroup.objects.all()
+        if self.show_types:
+            context['selected_types'] = self.selected_types
+            context['problem_types'] = ProblemType.objects.all()
+        context['has_fts'] = settings.ENABLE_FTS
+        context['search_query'] = self.search_query
+        context['completed_problem_ids'] = self.get_completed_problems()
+        context['attempted_problems'] = self.get_attempted_problems()
+
+        context.update(self.get_sort_paginate_context())
+        if not self.in_contest:
+            context.update(self.get_sort_context())
+            context['hot_problems'] = hot_problems(timedelta(days=1), settings.DMOJ_PROBLEM_HOT_PROBLEM_COUNT)
+            context['point_start'], context['point_end'], context['point_values'] = self.get_noui_slider_points()
+        else:
+            context['hot_problems'] = None
+            context['point_start'], context['point_end'], context['point_values'] = 0, 0, {}
+            context['hide_contest_scoreboard'] = self.contest.scoreboard_visibility in (
+                self.contest.SCOREBOARD_AFTER_CONTEST,
+                self.contest.SCOREBOARD_AFTER_PARTICIPATION,
+                self.contest.SCOREBOARD_HIDDEN,
+            )
+        return context
+
+    def get_noui_slider_points(self):
+        points = sorted(self.prepoint_queryset.values_list('points', flat=True).distinct())
+        if not points:
+            return 0, 0, {}
+        if len(points) == 1:
+            return points[0] - 1, points[0] + 1, {
+                'min': points[0] - 1,
+                '50%': points[0],
+                'max': points[0] + 1,
+            }
+
+        start, end = points[0], points[-1]
+        if self.point_start is not None:
+            start = self.point_start
+        if self.point_end is not None:
+            end = self.point_end
+        points_map = {0.0: 'min', 1.0: 'max'}
+        size = len(points) - 1
+        return start, end, {points_map.get(i / size, '%.2f%%' % (100 * i / size,)): j for i, j in enumerate(points)}
+
+    def GET_with_session(self, request, key):
+        if not request.GET:
+            return request.session.get(key, False)
+        return request.GET.get(key, None) == '1'
+
+    def setup_problem_list(self, request):
+        self.hide_solved = self.GET_with_session(request, 'hide_solved')
+        self.show_types = self.GET_with_session(request, 'show_types')
+        self.full_text = self.GET_with_session(request, 'full_text')
+        self.has_public_editorial = self.GET_with_session(request, 'has_public_editorial')
+
+        self.search_query = None
+        self.category = None
+        self.selected_types = []
+
+        # This actually copies into the instance dictionary...
+        self.all_sorts = set(self.all_sorts)
+        if not self.show_types:
+            self.all_sorts.discard('type')
+
+        self.category = safe_int_or_none(request.GET.get('category'))
+        if 'type' in request.GET:
+            try:
+                self.selected_types = list(map(int, request.GET.getlist('type')))
+            except ValueError:
+                pass
+
+        self.point_start = safe_float_or_none(request.GET.get('point_start'))
+        self.point_end = safe_float_or_none(request.GET.get('point_end'))
+        
+        # This code for recommend
+        recommendList = RecommendationList(request.user.id)
+        self.full_code = recommendList.get_recommendation_list()
+
+    def get(self, request, *args, **kwargs):
+        self.setup_problem_list(request)
+
+        try:
+            return super(ProblemRecommendationList, self).get(request, *args, **kwargs)
+        except ProgrammingError as e:
+            return generic_message(request, 'FTS syntax error', e.args[1], status=400)
+
+    def post(self, request, *args, **kwargs):
+        to_update = ('hide_solved', 'show_types', 'has_public_editorial', 'full_text')
+        for key in to_update:
+            if key in request.GET:
+                val = request.GET.get(key) == '1'
+                request.session[key] = val
+            else:
+                request.session.pop(key, None)
+        return HttpResponseRedirect(request.get_full_path())
 
 class LanguageTemplateAjax(View):
     def get(self, request, *args, **kwargs):
@@ -609,9 +816,69 @@ class RandomProblem(ProblemList):
                                                     request.META['QUERY_STRING']))
         return HttpResponseRedirect(queryset[randrange(count)].get_absolute_url())
 
+def fake_problem_submit(request, problem):
+    result = request.GET.get('result')
+    if not result:
+        result = 'AC'
+        
+    try:
+        p = Problem.objects.get(code=problem)
+    except Problem.DoesNotExist:
+        return None
+    
+    user = request.user.profile
+    language = Language.objects.first()
+    judge = Judge.objects.first()
+    testcase = randrange(4, 10)
+    
+    new_submission = Submission.objects.create(
+        user=user,
+        problem=p,
+        date=timezone.now(),
+        time=1.02141281,
+        memory=11452,
+        points=p.points if result == "AC" else 0,
+        language=language,
+        status='D',
+        result=result,
+        judged_date=timezone.now(),
+        judged_on=judge,
+    )
+    
+    for i in range(1, testcase):
+        SubmissionTestCase.objects.create(
+            case=i,
+            status="AC" if result == "AC" else "WA",
+            submission=new_submission,
+            time=0.895847708,
+            memory=11452,
+            points=1,
+            total=1,
+        )
+
+    # update related info
+    p.update_stats()
+    key = 'user_complete:%d' % user.id
+    cache.delete(key)
+    
+    rec_data, created = RecommendationData.objects.get_or_create(
+        user=user,
+        problem=p,
+        defaults={
+            'number_of_attempt': 1,
+            'final_result': result,
+        }
+    )
+
+    if not created:
+        if rec_data.final_result != "AC":
+            rec_data.number_of_attempt += 1
+            rec_data.final_result = result
+            rec_data.save()
+
+    return redirect('submission_status', submission=new_submission.id)
 
 user_logger = logging.getLogger('judge.user')
-
 
 class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFormView):
     template_name = 'problem/submit.html'

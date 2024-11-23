@@ -100,8 +100,9 @@ urlpatterns = [
     path('', include('social_django.urls')),
 
     path('problems/', problem.ProblemList.as_view(), name='problem_list'),
+    path('recommendations/', problem.ProblemRecommendationList.as_view(), name='problem_recommend'),
     path('problems/random/', problem.RandomProblem.as_view(), name='problem_random'),
-
+    
     path('problem/<str:problem>', include([
         path('', problem.ProblemDetail.as_view(), name='problem_detail'),
         path('/editorial', problem.ProblemSolution.as_view(), name='problem_editorial'),
@@ -110,7 +111,8 @@ urlpatterns = [
         path('/clone', problem.ProblemClone.as_view(), name='problem_clone'),
         path('/submit', problem.ProblemSubmit.as_view(), name='problem_submit'),
         path('/resubmit/<int:submission>', problem.ProblemSubmit.as_view(), name='problem_submit'),
-
+        path('/fake/submit', problem.fake_problem_submit, name='fake_problem_submit'),
+        
         path('/rank/', paged_list_view(ranked_submission.RankedSubmissions, 'ranked_submissions')),
         path('/submissions/', paged_list_view(submission.ProblemSubmissions, 'chronological_submissions')),
         path('/submissions/<str:user>/', paged_list_view(submission.UserProblemSubmissions, 'user_submissions')),

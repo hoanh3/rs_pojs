@@ -17,11 +17,27 @@
     },
     {
         "fields": {
+            "key": "recommendations",
+            "label": "Recommendations",
+            "level": 0,
+            "lft": 1,
+            "order": 2,
+            "parent": null,
+            "path": "/recommendations/",
+            "regex": "^/recommend",
+            "rght": 2,
+            "tree_id": 1
+        },
+        "model": "judge.navigationbar",
+        "pk": 2
+    },
+    {
+        "fields": {
             "key": "submit",
             "label": "Submissions",
             "level": 0,
             "lft": 1,
-            "order": 2,
+            "order": 3,
             "parent": null,
             "path": "/submissions/",
             "regex": "^/submi|^/src/",
@@ -29,7 +45,7 @@
             "tree_id": 2
         },
         "model": "judge.navigationbar",
-        "pk": 2
+        "pk": 3
     },
     {
         "fields": {
@@ -37,7 +53,7 @@
             "label": "Users",
             "level": 0,
             "lft": 1,
-            "order": 3,
+            "order": 4,
             "parent": null,
             "path": "/users/",
             "regex": "^/user",
@@ -45,7 +61,7 @@
             "tree_id": 3
         },
         "model": "judge.navigationbar",
-        "pk": 3
+        "pk": 4
     },
     {
         "fields": {
@@ -62,22 +78,6 @@
         },
         "model": "judge.navigationbar",
         "pk": 5
-    },
-    {
-        "fields": {
-            "key": "about",
-            "label": "About",
-            "level": 0,
-            "lft": 1,
-            "order": 6,
-            "parent": null,
-            "path": "/about/",
-            "regex": "^/about/$",
-            "rght": 4,
-            "tree_id": 5
-        },
-        "model": "judge.navigationbar",
-        "pk": 6
     },
     {
         "fields": {
