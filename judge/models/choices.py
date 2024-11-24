@@ -81,12 +81,37 @@ LANGUAGE_CHOICES = [
 ]
 
 EXPERIENCE_CHOICES = [
-    (1, 'Dưới 1 năm'),
-    (2, '1-3 năm'),
-    (3, 'Trên 3 năm'),
+    (6, 'Dưới 1 năm'),
+    (7, '1-3 năm'),
+    (8, 'Trên 3 năm'),
 ]
 
 PURPOSE_CHOICES = [
-    (1, 'Làm quen ngôn ngữ mới'),
-    (2, 'Luyện tập kỹ năng'),
+    (9, 'Làm quen ngôn ngữ mới'),
+    (10, 'Luyện tập kỹ năng'),
+]
+
+LEVEL_CHOICES = [
+    (11, 'Mới bắt đầu (Hiểu cơ bản các khái niệm)'),
+    (12, 'Trung bình (Giải quyết được các bài toán cơ bản và trung cấp)'),
+    (13, 'Nâng cao (Xây dựng được các dự án lớn, hiểu thuật toán phức tạp)'),
+]
+
+ALGORITHM_CHOICES = [
+    (14, 'Chưa từng học'),
+    (15, 'Đã học cơ bản (sắp xếp, tìm kiếm, stack, queue)'),
+    (16, 'Thành thạo (ứng dụng giải bài toán thực tế)'),
+]
+
+CONTEST_CHOICES = [
+    (17, 'Chưa bao giờ'),
+    (18, 'Thỉnh thoảng'),
+    (19, 'Thường xuyên'),
+]
+
+HOBBY_CHOICES = [
+    (20, 'Tốc độ giải bài'),
+    (21, 'Độ chính xác và tối ưu'),
+    (22, 'Học được kiến thức mới'),
+    (23, 'Tận hưởng quá trình thử nghiệm'),
 ]

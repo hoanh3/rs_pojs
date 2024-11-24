@@ -398,7 +398,6 @@ def edit_survey(request):
             print(form.errors)
         if form.is_valid():
             with revisions.create_revision(atomic=True):
-                print("hello world")
                 form.save()
                 revisions.set_user(request.user)
                 revisions.set_comment(_('Updated on site'))

@@ -290,6 +290,30 @@
                         <span class="fullwidth">{{ form.purpose }}</span>
                     </div>
                 </div>
+                <div style="padding-bottom:0.3em; margin-top:1em" class="survey-question">
+                    <label style="padding-bottom:0.3em; margin-top:0.3em" class="grayed"><b>{{ _('How would you rate your programming skill level?') }}</b></label>
+                    <div style="padding-bottom:0.3em; margin-top:0.6em" >
+                        <span class="fullwidth">{{ form.skill_level }}</span>
+                    </div>
+                </div>
+                <div style="padding-bottom:0.3em; margin-top:1em" class="survey-question">
+                    <label style="padding-bottom:0.3em; margin-top:0.3em" class="grayed"><b>{{ _('Do you have experience with algorithms and data structures?') }}</b></label>
+                    <div style="padding-bottom:0.3em; margin-top:0.6em" >
+                        <span class="fullwidth">{{ form.algorithm }}</span>
+                    </div>
+                </div>
+                <div style="padding-bottom:0.3em; margin-top:1em" class="survey-question">
+                    <label style="padding-bottom:0.3em; margin-top:0.3em" class="grayed"><b>{{ _('Have you participated in coding competitions (e.g., Codeforces, LeetCode, Hackerrank)?') }}</b></label>
+                    <div style="padding-bottom:0.3em; margin-top:0.6em" >
+                        <span class="fullwidth">{{ form.contest }}</span>
+                    </div>
+                </div>
+                <div style="padding-bottom:0.3em; margin-top:1em" class="survey-question">
+                    <label style="padding-bottom:0.3em; margin-top:0.3em" class="grayed"><b>{{ _('What do you prioritize the most when solving problems?') }}</b></label>
+                    <div style="padding-bottom:0.3em; margin-top:0.6em" >
+                        <span class="fullwidth">{{ form.hobby }}</span>
+                    </div>
+                </div>
             </div>
  
             <input type="submit" class="submit-bar" value="{{ _('Submit') }}">

@@ -1,4 +1,4 @@
-from judge.models import RecommendationData, Problem, Profile
+from judge.models import RecommendationData, Problem, Profile, Survey
 
 class RecommendationList:
     def __init__(self, user):
@@ -6,7 +6,8 @@ class RecommendationList:
         
     def get_db_data(self):
         self.data_sub = RecommendationData.objects.all()
-        self.users = Profile.objects.all().values_list('id', flat=True)
+        self.data_survey = Survey.objects.all()
+        self.users = Profile.objects.exclude(id=1).values_list('id', flat=True)
         self.problems = Problem.objects.all().values_list('id', flat=True)
 
     def setup_for_recommend(self):
@@ -21,6 +22,7 @@ class RecommendationList:
         self.C_uv = dict() # tập bài toán cả hai người dùng u, v cùng tương tác
         self.SimProb_p = dict() # độ tương đồng giữa hai người dùng được xác định theo một bài toán cụ thể p 
         self.Sim = dict() # độ tương đồng tổng quát của hai người dùng 
+        self.Sims = dict() # độ tương đồng của hai người dùng dựa trên dữ liệu khảo sát
         self.t = 5 # số lần thử mà nếu vượt quá thì bài toán được coi là khó nhất
         
         # khởi tạo dữ liệu đề xuất
@@ -54,6 +56,18 @@ class RecommendationList:
             if final_result == "AC":
                 self.M[u_code][p_code] = 1
             self.F[u_code][p_code] = rec_data.number_of_attempt
+    
+    def get_default_data_survey(self):
+        self.S = dict()
+        for s in self.data_survey:
+            u_code = s.user.id
+            ans_set = set([s.language, s.experience, s.purpose , s.skill_level, s.algorithm, s.contest, s.hobby])
+            self.S[u_code] = ans_set
+        for u_code in self.users:
+                self.Sims[u_code] = dict()
+                for v_code in self.users:
+                    self.Sims[u_code][v_code] = len(self.S[u_code] & self.S[v_code]) / 7
+            
     
     def pre_process_data(self):
         for u_code in self.users:
@@ -131,17 +145,25 @@ class RecommendationList:
                     self.Sim[u][v] = simprob_sum / len(common_problems)
 
     def get_recommendation_list(self):
+        n = 15
         self.setup_for_recommend()
         self.pre_process_data()
         self.apply_fuzzy()
         self.calculate_similarity()
+        self.get_default_data_survey()
         
         sUX = self.Sim[self.user]
+        sUX.pop(self.user)
         sorted_sUX = dict(sorted(sUX.items(), key=lambda item: item[1], reverse=True))
-        kUserNear = dict(list(sorted_sUX.items())[:15])
+        kUserNear = dict(list(sorted_sUX.items())[:n])
 
-        print(kUserNear)
-        print(sUX)
+        if kUserNear[list(kUserNear.keys())[n-1]] == 0:
+            sUX = self.Sims[self.user]
+            sUX.pop(self.user)
+            sorted_sUX = dict(sorted(sUX.items(), key=lambda item: item[1], reverse=True))
+            kUserNear = dict(list(sorted_sUX.items())[:n])
+        
+        print(f"TOP similar with {self.user}:" , kUserNear)
         
         problemCode = set(k for k, v in self.M[self.user].items() if v == 1)
         p_code = set(self.problems)
