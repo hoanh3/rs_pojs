@@ -152,9 +152,20 @@
 {% endblock %}
 
 {% block body %}
-    {% if page_obj.has_other_pages() %}
-        <div class="top-pagination-bar">{% include "list-pages.html" %}</div>
-    {% endif %}
+    <div class="problem-type-container">
+        <ul id="type-list" style="display: flex; flex-wrap: wrap; list-style: none; padding: 0; font-family: 'Segoe UI', 'Lucida Grande', Arial, sans-serif; font-weight: 400;">
+            {% for type in problem_types %}
+                <li style="padding: 0px 8px; font-size: 15px; margin: 2px; line-height: 28px; cursor: pointer;"
+                onmouseover="this.style.backgroundColor='#e8e8e880';"
+                onmouseout="this.style.backgroundColor='white'">
+                    <a href="{{ url('problem_list') }}?type={{ type.id }}" style="color: black;"
+                    onmouseover="this.style.color='#3b82f680'" 
+                    onmouseout="this.style.color='black'">{{ type.name }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <hr>
 
     <div id="common-content">
         {% block before_table %}{% endblock %}

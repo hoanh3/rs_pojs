@@ -70,49 +70,156 @@
 
 {% block body %}
     <br>
-    <div><a href="{{ url('submission_source', submission.id) }}">{{ _('View source') }}</a></div>
-    {% if request.user == submission.user.user or perms.judge.resubmit_other %}
-        <div><a href="{{ url('problem_submit', submission.problem.code, submission.id) }}">{{ _('Resubmit') }}</a></div>
-    {% endif %}
-    {% if perms.judge.rejudge_submission and not submission.is_locked %}
-        {% compress js %}
-            <script type="text/javascript">
-                window.confirm_and_rejudge = function (form) {
-                    if (confirm({{ _('Are you sure you want to rejudge?')|htmltojs }})) {
-                        form.submit();
-                    }
-                };
-            </script>
-        {% endcompress %}
-        <div>
-            <form action="{{ url('submission_rejudge') }}" method="post">
-                {% csrf_token %}
-                <a href="#" onclick="confirm_and_rejudge(parentNode)">{{ _('Rejudge') }}</a>
-                <input type="hidden" name="id" value="{{ submission.id }}">
-                <input type="hidden" name="path" value="{{ url('submission_status', submission.id) }}">
-            </form>
+    <div class="submit-container" style="display: flex;">
+        <div class="submit-status" style="margin-right: 4px;">
+            <div><a href="{{ url('submission_source', submission.id) }}">{{ _('View source') }}</a></div>
+            {% if request.user == submission.user.user or perms.judge.resubmit_other %}
+                <div><a href="{{ url('problem_submit', submission.problem.code, submission.id) }}">{{ _('Resubmit') }}</a></div>
+            {% endif %}
+            {% if perms.judge.rejudge_submission and not submission.is_locked %}
+                {% compress js %}
+                    <script type="text/javascript">
+                        window.confirm_and_rejudge = function (form) {
+                            if (confirm({{ _('Are you sure you want to rejudge?')|htmltojs }})) {
+                                form.submit();
+                            }
+                        };
+                    </script>
+                {% endcompress %}
+                <div>
+                    <form action="{{ url('submission_rejudge') }}" method="post">
+                        {% csrf_token %}
+                        <a href="#" onclick="confirm_and_rejudge(parentNode)">{{ _('Rejudge') }}</a>
+                        <input type="hidden" name="id" value="{{ submission.id }}">
+                        <input type="hidden" name="path" value="{{ url('submission_status', submission.id) }}">
+                    </form>
+                </div>
+            {% endif %}
+        
+            <br>
+            <hr class="half-hr">
+            <br>
+        
+            <div id="test-cases">{% include "submission/status-testcases.html" %}</div>
+        
+            {% if not submission.is_graded %}
+                {% if request.user == submission.user.user or perms.judge.abort_any_submission %}
+                    <div id="abort-button">
+                        <br>
+                        <hr class="half-hr">
+                        <br>
+                        <form action="{{ url('submission_abort', submission.id) }}" method="post"
+                              title="{{ _('Press Ctrl-Enter or Command-Enter to abort.') }}">
+                            {% csrf_token %}
+                            <input style="float:left" type="submit" value="{{ _('Abort') }}" class="button">
+                            <br><br>
+                        </form>
+                    </div>
+                {% endif %}
+            {% endif %}
         </div>
-    {% endif %}
+        
+        <svg height="600" width="0.5">
+            <line x1="1" y1="0" x2="1" y2="600" style="stroke:rgb(155, 151, 151);stroke-width:1" />
+        </svg>
 
-    <br>
-    <hr class="half-hr">
-    <br>
-
-    <div id="test-cases">{% include "submission/status-testcases.html" %}</div>
-
-    {% if not submission.is_graded %}
-        {% if request.user == submission.user.user or perms.judge.abort_any_submission %}
-            <div id="abort-button">
-                <br>
-                <hr class="half-hr">
-                <br>
-                <form action="{{ url('submission_abort', submission.id) }}" method="post"
-                      title="{{ _('Press Ctrl-Enter or Command-Enter to abort.') }}">
-                    {% csrf_token %}
-                    <input style="float:left" type="submit" value="{{ _('Abort') }}" class="button">
-                    <br><br>
-                </form>
+        <div class="recommend-problem-list" style="margin-left: 10px; min-width: 800px;">
+            <div class="title-recommend-problem-list">
+                <h3>Danh sách đề xuất</h3>
             </div>
-        {% endif %}
-    {% endif %}
+            <hr>
+            <div id="content-left" class="problems h-scrollable-table">
+                <table id="problem-table" class="table striped">
+                    <thead>
+                    <tr>
+                        {% if request.user.is_authenticated %}
+                            <th class="solved">
+                                <a href="">
+                                    <i class="fa fa-check"></i>
+                                </a>
+                            </th>
+                        {% endif %}
+                        <th class="problem">
+                            <a href="">{{ _('Problem') }}</a>
+                        </th>
+                        <th class="category">
+                            <a href="">{{ _('Category') }}</a>
+                        </th>
+                        <th class="points">
+                            <a href="">{{ _('Points') }}</a>
+                        </th>
+                        <th class="ac-rate">
+                            <a href="">{{ _('AC %%') }}</a>
+                        </th>
+                        <th class="editorial" title="{{ _('Editorial') }}">
+                            <a href="">
+                                <i class="fa fa-book"></i>
+                            </a>
+                        </th>
+                        <th class="users">
+                            <a href="">{{ _('Users') }}</a>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for problem in problems %}
+                        <tr>
+                            {% if request.user.is_authenticated %}
+                                {% if problem.id in completed_problem_ids %}
+                                    <td solved="1">
+                                        <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                            {% if problem.is_public or request.in_contest %}
+                                                <i class="solved-problem-color fa fa-check-circle"></i>
+                                            {% else %}
+                                                <i class="solved-problem-color fa fa-lock"></i>
+                                            {% endif %}
+                                        </a>
+                                    </td>
+                                {% elif problem.id in attempted_problems %}
+                                    <td solved="0">
+                                        <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                            {% if problem.is_public or request.in_contest %}
+                                                <i class="attempted-problem-color fa fa-minus-circle"></i>
+                                            {% else %}
+                                                <i class="attempted-problem-color fa fa-lock"></i>
+                                            {% endif %}
+                                        </a>
+                                    </td>
+                                {% else %}
+                                    <td solved="-1">
+                                        {% if problem.is_public or request.in_contest %}
+                                            <i class="unsolved-problem-color fa fa-minus-circle"></i>
+                                        {% else %}
+                                            <i class="unsolved-problem-color fa fa-lock"></i>
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+                            {% endif %}
+                            <td class="problem">
+                                <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
+                            </td>
+                            <td class="category">{{ problem.group.full_name }}</td>
+                            <td class="p">{{ problem.points|floatformat }}{% if problem.partial %}p{% endif %}</td>
+                            <td class="ac-rate">{{ problem.ac_rate|floatformat(1) }}%</td>
+                            <td>
+                                {% if problem.has_public_editorial %}
+                                    <a href="{{ url('problem_editorial', problem.code) }}">
+                                        <i class="has-editorial-color fa fa-check-circle"></i>
+                                    </a>
+                                {% else %}
+                                    <i class="no-editorial-color fa fa-minus-circle"></i>
+                                {% endif %}
+                            </td>
+                            <td class="users">
+                                <a href="{{ url('ranked_submissions', problem.code) }}">
+                                    {{ problem.user_count }}
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 {% endblock %}

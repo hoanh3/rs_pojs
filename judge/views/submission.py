@@ -25,9 +25,10 @@ from judge.models import Contest, Language, Problem, ProblemTranslation, Profile
 from judge.models.problem import SubmissionSourceAccess
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.lazy import memo_lazy
-from judge.utils.problems import get_result_data, user_completed_ids, user_editable_ids, user_tester_ids
+from judge.utils.problems import get_result_data, user_completed_ids, user_editable_ids, user_tester_ids, user_attempted_ids
 from judge.utils.raw_sql import join_sql_subquery, use_straight_join
-from judge.utils.views import DiggPaginatorMixin, TitleMixin, generic_message
+from judge.utils.views import QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, generic_message
+from judge.views.recommend import RecommendationList
 
 
 def submission_related(queryset):
@@ -178,6 +179,15 @@ class SubmissionStatus(SubmissionDetailBase):
 
         context['batches'], statuses, context['max_execution_time'] = group_test_cases(submission.test_cases.all())
         context['statuses'] = combine_statuses(statuses, submission)
+
+        context['completed_problem_ids'] = user_completed_ids(self.request.profile)
+        context['attempted_problems'] = user_attempted_ids(self.request.profile)
+        
+        # This code for recommend
+        # recommendList = RecommendationList(self.request.profile.id)
+        # self.full_code = recommendList.get_recommendation_list()
+        # context['problems'] = Problem.objects.filter(id__in=self.full_code)
+
 
         context['time_limit'] = submission.problem.time_limit
         try:
