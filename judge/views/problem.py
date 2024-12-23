@@ -357,7 +357,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
     title = gettext_lazy('Problems')
     context_object_name = 'problems'
     template_name = 'problem/list.html'
-    paginate_by = 50
+    paginate_by = 30
     sql_sort = frozenset(('points', 'ac_rate', 'user_count', 'code'))
     manual_sort = frozenset(('name', 'group', 'solved', 'type', 'editorial'))
     all_sorts = sql_sort | manual_sort
@@ -470,12 +470,11 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         if 'search' in self.request.GET:
             self.search_query = query = ' '.join(self.request.GET.getlist('search')).strip()
             if query:
-                if settings.ENABLE_FTS and self.full_text:
-                    queryset = self.apply_full_text(queryset, query)
-                else:
-                    queryset = queryset.filter(
-                        Q(code__icontains=query) | Q(name__icontains=query) |
-                        Q(translations__name__icontains=query, translations__language=self.request.LANGUAGE_CODE))
+                queryset = queryset.filter(
+                    Q(code__icontains=query) | Q(name__icontains=query) |
+                    Q(translations__name__icontains=query, translations__language=self.request.LANGUAGE_CODE))
+        if 'type' in self.request.GET:
+            print("type")
         self.prepoint_queryset = queryset
         if self.point_start is not None:
             queryset = queryset.filter(points__gte=self.point_start)
@@ -497,9 +496,9 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         context['full_text'] = 0 if self.in_contest else int(self.full_text)
         context['category'] = self.category
         context['categories'] = ProblemGroup.objects.all()
+        context['problem_types'] = ProblemType.objects.all()
         if self.show_types:
             context['selected_types'] = self.selected_types
-            context['problem_types'] = ProblemType.objects.all()
         context['has_fts'] = settings.ENABLE_FTS
         context['search_query'] = self.search_query
         context['completed_problem_ids'] = self.get_completed_problems()
@@ -588,12 +587,12 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
                 request.session.pop(key, None)
         return HttpResponseRedirect(request.get_full_path())
 
-class ProblemRecommendationList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView):
+class ProblemRecommendationList(LoginRequiredMixin, QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView):
     model = Problem
     title = gettext_lazy('Recommendations')
     context_object_name = 'problems'
     template_name = 'recommend/list.html'
-    paginate_by = 50
+    paginate_by = 30
     sql_sort = frozenset(('points', 'ac_rate', 'user_count', 'code'))
     manual_sort = frozenset(('name', 'group', 'solved', 'type', 'editorial'))
     all_sorts = sql_sort | manual_sort
@@ -858,6 +857,7 @@ def fake_problem_submit(request, problem):
 
     # update related info
     p.update_stats()
+    user.calculate_points()
     key = 'user_complete:%d' % user.id
     cache.delete(key)
     

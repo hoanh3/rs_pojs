@@ -308,7 +308,7 @@
             "is_public": true,
             "license": null,
             "memory_limit": 65536,
-            "name": "A Plus B",
+            "name": "Tổng hai số A B",
             "og_image": "",
             "partial": true,
             "points": 5.0,
@@ -362,7 +362,7 @@
     },
     {
         "fields": {
-            "domain": "localhost:8081",
+            "domain": "http://172.28.250.56",
             "name": "DMOJ: Modern Online Judge"
         },
         "model": "sites.site",
