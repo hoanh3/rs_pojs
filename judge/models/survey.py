@@ -15,13 +15,17 @@ from judge.models.problem import Problem, SubmissionSourceAccess
 from judge.models.profile import Profile
 from judge.models.runtime import Language
 from judge.utils.unicode import utf8bytes
-from judge.models.choices import LANGUAGE_CHOICES, EXPERIENCE_CHOICES, PURPOSE_CHOICES
+from judge.models.choices import LANGUAGE_CHOICES, EXPERIENCE_CHOICES, PURPOSE_CHOICES, LEVEL_CHOICES, ALGORITHM_CHOICES, CONTEST_CHOICES, HOBBY_CHOICES
 
 __all__ = ['Survey']
 
 class Survey(models.Model):
     user = models.ForeignKey(Profile, verbose_name=_('user'), on_delete=models.CASCADE, db_index=False)
-    language = models.IntegerField(choices=LANGUAGE_CHOICES, default='1')
-    experience = models.IntegerField(choices=EXPERIENCE_CHOICES, default='1')
-    purpose = models.IntegerField(choices=PURPOSE_CHOICES, default='1')
+    language = models.IntegerField(choices=LANGUAGE_CHOICES, null=True, default=None)
+    experience = models.IntegerField(choices=EXPERIENCE_CHOICES, null=True, default=None)
+    purpose = models.IntegerField(choices=PURPOSE_CHOICES, null=True, default=None)
+    skill_level = models.IntegerField(choices=LEVEL_CHOICES, null=True, default=None)
+    algorithm = models.IntegerField(choices=ALGORITHM_CHOICES, null=True, default=None)
+    contest = models.IntegerField(choices=CONTEST_CHOICES, null=True, default=None)
+    hobby = models.IntegerField(choices=HOBBY_CHOICES, null=True, default=None)
     submitted_at = models.DateTimeField(auto_now_add=True)

@@ -321,11 +321,15 @@ class ProblemPointsVoteForm(ModelForm):
 class SurveyForm(ModelForm):
     class Meta:
         model = Survey
-        fields = ['language', 'experience', 'purpose']
+        fields = ['language', 'experience', 'purpose', 'skill_level', 'algorithm', 'contest', 'hobby']
         widgets = {
             'language': forms.RadioSelect,
             'experience': forms.RadioSelect,
             'purpose': forms.RadioSelect,
+            'skill_level': forms.RadioSelect,
+            'algorithm': forms.RadioSelect,
+            'contest': forms.RadioSelect,
+            'hobby': forms.RadioSelect,
         }
 
     def __init__(self, *args, **kwargs):
