@@ -210,7 +210,6 @@ else:
                         'judge.ContestTag',
                     ],
                 },
-                ('judge.Ticket', 'fa-bell'),
                 {
                     'model': 'auth.User',
                     'icon': 'fa-user',
@@ -490,7 +489,6 @@ MARKDOWN_STYLES = {
     'solution': MARKDOWN_STAFF_EDITABLE_STYLE,
     'contest_tag': MARKDOWN_STAFF_EDITABLE_STYLE,
     'organization-about': MARKDOWN_USER_LARGE_STYLE,
-    'ticket': MARKDOWN_USER_LARGE_STYLE,
 }
 
 MARTOR_ENABLE_CONFIGS = {

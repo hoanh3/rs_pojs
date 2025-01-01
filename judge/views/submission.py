@@ -184,9 +184,9 @@ class SubmissionStatus(SubmissionDetailBase):
         context['attempted_problems'] = user_attempted_ids(self.request.profile)
         
         # This code for recommend
-        recommendList = RecommendationList(self.request.profile.id)
+        recommendList = RecommendationList(self.request.profile.id, self.request.profile.data_rec)
         self.full_code = recommendList.get_recommendation_list()
-        context['problems'] = Problem.objects.filter(id__in=self.full_code)
+        context['problems'] = Problem.objects.filter(id__in=self.full_code).order_by('id')
 
 
         context['time_limit'] = submission.problem.time_limit
