@@ -4,6 +4,7 @@ import re
 from datetime import timedelta
 from operator import itemgetter
 from random import randrange
+from collections import deque
 from statistics import mean, median
 
 from django.core.cache import cache
@@ -37,7 +38,6 @@ from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
 from judge.utils.problems import contest_attempted_ids, contest_completed_ids, hot_problems, user_attempted_ids, \
     user_completed_ids
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
-from judge.utils.tickets import own_ticket_filter
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
 from judge.views.recommend import RecommendationList
 
@@ -175,13 +175,7 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
 
         can_edit = self.object.is_editable_by(user)
         context['can_edit_problem'] = can_edit
-        if user.is_authenticated:
-            tickets = self.object.tickets
-            if not can_edit:
-                tickets = tickets.filter(own_ticket_filter(user.profile.id))
-            context['has_tickets'] = tickets.exists()
-            context['num_open_tickets'] = tickets.filter(is_open=True).values('id').distinct().count()
-
+        
         try:
             context['editorial'] = Solution.objects.get(problem=self.object)
         except ObjectDoesNotExist:
@@ -772,7 +766,7 @@ class ProblemRecommendationList(LoginRequiredMixin, QueryStringSortMixin, TitleM
         self.point_end = safe_float_or_none(request.GET.get('point_end'))
         
         # This code for recommend
-        recommendList = RecommendationList(request.user.id)
+        recommendList = RecommendationList(request.user.id, request.user.profile.data_rec)
         self.full_code = recommendList.get_recommendation_list()
 
     def get(self, request, *args, **kwargs):
@@ -860,6 +854,16 @@ def fake_problem_submit(request, problem):
     user.calculate_points()
     key = 'user_complete:%d' % user.id
     cache.delete(key)
+    
+    # update nhóm tương tác
+    ltype = deque(user.data_rec)
+    for i in p.types.all():
+        ltype.appendleft(i.id)
+    if len(ltype) > 5:
+        last = ltype.pop()
+    print(ltype)
+    user.data_rec = list(ltype)
+    user.save()
     
     rec_data, created = RecommendationData.objects.get_or_create(
         user=user,

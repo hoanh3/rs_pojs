@@ -1,11 +1,15 @@
 from judge.models import RecommendationData, Problem, Profile, Survey
+from datetime import datetime
+from django.db.models import Prefetch
+import cProfile
+import pstats
 
 class RecommendationList:
-    def __init__(self, user):
+    def __init__(self, user, ltype):
         self.user = user
+        self.ltype = ltype
         
     def get_db_data(self):
-        self.data_sub = RecommendationData.objects.all()
         self.data_survey = Survey.objects.all()
         self.users = Profile.objects.exclude(id=1).values_list('id', flat=True)
         self.problems = Problem.objects.all().values_list('id', flat=True)
@@ -23,7 +27,7 @@ class RecommendationList:
         self.SimProb_p = dict() # độ tương đồng giữa hai người dùng được xác định theo một bài toán cụ thể p 
         self.Sim = dict() # độ tương đồng tổng quát của hai người dùng 
         self.Sims = dict() # độ tương đồng của hai người dùng dựa trên dữ liệu khảo sát
-        self.t = 5 # số lần thử mà nếu vượt quá thì bài toán được coi là khó nhất
+        self.t = 3 # số lần thử mà nếu vượt quá thì bài toán được coi là khó nhất
         
         # khởi tạo dữ liệu đề xuất
         for u_code in self.users:
@@ -49,13 +53,6 @@ class RecommendationList:
                     self.SimProb_p[p_code][u_code][v_code] = 0
                     self.Sim[u_code][v_code] = 0
         
-        for rec_data in self.data_sub:
-            p_code = rec_data.problem.id
-            u_code = rec_data.user.id
-            final_result = rec_data.final_result
-            if final_result == "AC":
-                self.M[u_code][p_code] = 1
-            self.F[u_code][p_code] = rec_data.number_of_attempt
     
     def get_default_data_survey(self):
         self.S = dict()
@@ -66,13 +63,15 @@ class RecommendationList:
         for u_code in self.users:
                 self.Sims[u_code] = dict()
                 for v_code in self.users:
-                    self.Sims[u_code][v_code] = len(self.S[u_code] & self.S[v_code]) / 7
-            
+                    try:
+                        self.Sims[u_code][v_code] = len(self.S[u_code] & self.S[v_code]) / 7
+                    except:
+                        self.Sims[u_code][v_code] = 0
     
     def pre_process_data(self):
         for u_code in self.users:
             for p_code in self.problems:
-                if self.M[u_code][p_code] == 0 and self.F[u_code][p_code] > 0:
+                if self.F[u_code][p_code] > 0:
                     self.problem_failed_set[u_code].add(p_code)
 
         for u_code in self.users:
@@ -144,9 +143,45 @@ class RecommendationList:
                 if len(common_problems) > 0:
                     self.Sim[u][v] = simprob_sum / len(common_problems)
 
+    def run_process(self):
+        data_sub = RecommendationData.objects.select_related('problem', 'user').values(
+            'problem_id', 'user_id', 'final_result', 'number_of_attempt'
+        ).iterator(chunk_size=5000)
+    
+
+        for rec_data in data_sub:
+            p_code = rec_data['problem_id']
+            u_code = rec_data['user_id']
+            final_result = rec_data['final_result']
+
+            self.M.setdefault(u_code, {})[p_code] = 1 if final_result == "AC" else 0
+            self.F.setdefault(u_code, {})[p_code] = rec_data['number_of_attempt']
+    
+        self.problem_map = {}
+
+        for problem in Problem.objects.prefetch_related('types'):
+            self.problem_map[problem.id] = [ptype.id for ptype in problem.types.all()]
+
+    def calc_weight_point(self):
+        n = len(self.ltype)
+        start = 1.0
+        step = 0.2
+        decimal_values = [start - i * step for i in range(n)]
+        self.type_values_dict = {self.ltype[i]: decimal_values[i] for i in range(n)}
+
+    def get_max_decimal(self):
+        self.problem_value = {}
+        for problem, types in self.problem_map.items():
+            values = [self.type_values_dict[t] for t in types if t in self.type_values_dict]
+            self.problem_value[problem] = max(values, default=0.5)
+
     def get_recommendation_list(self):
         n = 15
         self.setup_for_recommend()
+        self.run_process()
+        self.calc_weight_point()
+        self.get_max_decimal()
+        
         self.pre_process_data()
         self.apply_fuzzy()
         self.calculate_similarity()
@@ -163,7 +198,6 @@ class RecommendationList:
             sorted_sUX = dict(sorted(sUX.items(), key=lambda item: item[1], reverse=True))
             kUserNear = dict(list(sorted_sUX.items())[:n])
         
-        print(f"TOP similar with {self.user}:" , kUserNear)
         
         problemCode = set(k for k, v in self.M[self.user].items() if v == 1)
         p_code = set(self.problems)
@@ -174,10 +208,12 @@ class RecommendationList:
             wp = 0
             for u, sim_value in kUserNear.items():
                 if self.M[u].get(p, 0) == 1:
-                    wp += sim_value 
-            recProblem[p] = wp
+                    wp += sim_value
+            recProblem[p] = wp * self.problem_value[p]
 
         sortedRecProblem = dict(sorted(recProblem.items(), key=lambda item: item[1], reverse=True))
-        print(sortedRecProblem)
         
+        for i in list(sortedRecProblem.keys())[:15]:
+            print(i, sortedRecProblem[i])
+
         return list(sortedRecProblem.keys())[:15]

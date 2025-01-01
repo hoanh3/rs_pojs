@@ -13,13 +13,13 @@ from martor.views import markdown_search_user
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
 from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
-    preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tasks, ticket, \
+    preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tasks,  \
     two_factor, user, widgets
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
 from judge.views.register import ActivationView, RegistrationView
-from judge.views.select2 import AssigneeSelect2View, ClassSelect2View, CommentSelect2View, ContestSelect2View, \
-    ContestUserSearchSelect2View, OrganizationSelect2View, ProblemSelect2View, TicketUserSelect2View, \
+from judge.views.select2 import ClassSelect2View, CommentSelect2View, ContestSelect2View, \
+    ContestUserSearchSelect2View, OrganizationSelect2View, ProblemSelect2View,  \
     UserSearchSelect2View, UserSelect2View
 from judge.views.widgets import martor_image_uploader
 
@@ -124,8 +124,6 @@ urlpatterns = [
         path('/test_data/diff', ProblemSubmissionDiff.as_view(), name='problem_submission_diff'),
         path('/data/<path:path>', problem_data_file, name='problem_data_file'),
 
-        path('/tickets', ticket.ProblemTicketListView.as_view(), name='problem_ticket_list'),
-        path('/tickets/new', ticket.NewProblemTicketView.as_view(), name='new_problem_ticket'),
 
         path('/vote', problem.ProblemVote.as_view(), name='problem_vote'),
         path('/vote/delete', problem.DeleteProblemVote.as_view(), name='delete_problem_vote'),
@@ -298,8 +296,6 @@ urlpatterns = [
             path('user_search', UserSearchSelect2View.as_view(), name='user_search_select2_ajax'),
             path('contest_users/<str:contest>', ContestUserSearchSelect2View.as_view(),
                  name='contest_user_search_select2_ajax'),
-            path('ticket_user', TicketUserSelect2View.as_view(), name='ticket_user_select2_ajax'),
-            path('ticket_assignee', AssigneeSelect2View.as_view(), name='ticket_assignee_select2_ajax'),
         ])),
 
         path('preview/', include([
@@ -313,7 +309,6 @@ urlpatterns = [
             path('organization', preview.OrganizationMarkdownPreviewView.as_view(), name='organization_preview'),
             path('solution', preview.SolutionMarkdownPreviewView.as_view(), name='solution_preview'),
             path('license', preview.LicenseMarkdownPreviewView.as_view(), name='license_preview'),
-            path('ticket', preview.TicketMarkdownPreviewView.as_view(), name='ticket_preview'),
         ])),
 
         path('martor/', include([
@@ -341,18 +336,7 @@ urlpatterns = [
         ])),
     ])),
 
-    path('tickets/', include([
-        path('', ticket.TicketList.as_view(), name='ticket_list'),
-        path('ajax', ticket.TicketListDataAjax.as_view(), name='ticket_ajax'),
-    ])),
 
-    path('ticket/<int:pk>', include([
-        path('', ticket.TicketView.as_view(), name='ticket'),
-        path('/ajax', ticket.TicketMessageDataAjax.as_view(), name='ticket_message_ajax'),
-        path('/open', ticket.TicketStatusChangeView.as_view(open=True), name='ticket_open'),
-        path('/close', ticket.TicketStatusChangeView.as_view(open=False), name='ticket_close'),
-        path('/notes', ticket.TicketNotesEditView.as_view(), name='ticket_notes'),
-    ])),
 
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}),
 
