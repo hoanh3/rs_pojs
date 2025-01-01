@@ -7,12 +7,10 @@ from django.utils.translation import gettext as _
 from django.views.generic import ListView
 
 from judge.comments import CommentedDetailView
-from judge.models import BlogPost, Comment, Contest, Language, Problem, ProblemClarification, Profile, Submission, \
-    Ticket
+from judge.models import BlogPost, Comment, Contest, Language, Problem, ProblemClarification, Profile, Submission
 from judge.utils.cachedict import CacheDict
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
-from judge.utils.tickets import filter_visible_tickets
 from judge.utils.views import TitleMixin
 
 
@@ -70,21 +68,6 @@ class PostList(ListView):
         context['current_contests'] = visible_contests.filter(start_time__lte=now, end_time__gt=now)
         context['future_contests'] = visible_contests.filter(start_time__gt=now)
 
-        if self.request.user.is_authenticated:
-            context['own_open_tickets'] = (
-                Ticket.objects.filter(user=self.request.profile, is_open=True).order_by('-id')
-                              .prefetch_related('linked_item').select_related('user__user')
-            )
-        else:
-            context['own_open_tickets'] = []
-
-        # Superusers better be staffs, not the spell-casting kind either.
-        if self.request.user.is_staff:
-            tickets = (Ticket.objects.order_by('-id').filter(is_open=True).prefetch_related('linked_item')
-                             .select_related('user__user'))
-            context['open_tickets'] = filter_visible_tickets(tickets, self.request.user)[:10]
-        else:
-            context['open_tickets'] = []
         return context
 
 

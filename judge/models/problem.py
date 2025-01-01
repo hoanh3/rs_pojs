@@ -174,7 +174,6 @@ class Problem(models.Model):
                                                          choices=SUBMISSION_SOURCE_ACCESS)
 
     objects = TranslatedProblemQuerySet.as_manager()
-    tickets = GenericRelation('Ticket')
 
     organizations = models.ManyToManyField(Organization, blank=True, verbose_name=_('organizations'),
                                            help_text=_('If private, only these organizations may see the problem.'))

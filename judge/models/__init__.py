@@ -14,7 +14,6 @@ from judge.models.profile import Class, Organization, OrganizationRequest, Profi
 from judge.models.runtime import Judge, Language, RuntimeVersion
 from judge.models.submission import SUBMISSION_RESULT, Submission, SubmissionSource, SubmissionTestCase
 from judge.models.survey import Survey
-from judge.models.ticket import Ticket, TicketMessage
 from judge.models.rec_data import RecommendationData
 
 revisions.register(Profile, exclude=['points', 'last_access', 'ip', 'rating'])

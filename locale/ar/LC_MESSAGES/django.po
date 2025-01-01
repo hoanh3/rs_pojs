@@ -306,7 +306,6 @@ msgstr "ملخص"
 #: judge/admin/submission.py:218 judge/models/contest.py:500
 #: judge/models/contest.py:632 judge/models/profile.py:349
 #: judge/models/profile.py:380 judge/models/submission.py:67
-#: judge/models/ticket.py:32
 msgid "user"
 msgstr "مستخدم"
 
@@ -573,7 +572,6 @@ msgstr ""
 msgid "Comment body"
 msgstr ""
 
-#: judge/comments.py:47 judge/views/comment.py:41 judge/views/ticket.py:46
 #: judge/views/user.py:353
 msgid "Your part is silent, little toad."
 msgstr ""
@@ -2227,7 +2225,6 @@ msgstr ""
 #: templates/problem/problem-list-tabs.html:6
 #: templates/submission/info-base.html:15
 #: templates/submission/submission-list-tabs.html:15
-#: templates/ticket/message.html:18
 msgid "Admin"
 msgstr ""
 
@@ -2819,66 +2816,6 @@ msgstr ""
 
 #: judge/models/submission.py:304
 msgid "submission test cases"
-msgstr ""
-
-#: judge/models/ticket.py:10
-msgid "ticket title"
-msgstr ""
-
-#: judge/models/ticket.py:11
-msgid "ticket creator"
-msgstr ""
-
-#: judge/models/ticket.py:13
-msgid "creation time"
-msgstr ""
-
-#: judge/models/ticket.py:14
-msgid "assignees"
-msgstr ""
-
-#: judge/models/ticket.py:16
-msgid "quick notes"
-msgstr ""
-
-#: judge/models/ticket.py:17
-msgid "Staff notes for this issue to aid in processing."
-msgstr ""
-
-#: judge/models/ticket.py:18
-msgid "linked item type"
-msgstr ""
-
-#: judge/models/ticket.py:20
-msgid "linked item ID"
-msgstr ""
-
-#: judge/models/ticket.py:22
-msgid "is ticket open?"
-msgstr ""
-
-#: judge/models/ticket.py:25 judge/models/ticket.py:30
-msgid "ticket"
-msgstr ""
-
-#: judge/models/ticket.py:26
-msgid "tickets"
-msgstr ""
-
-#: judge/models/ticket.py:34
-msgid "message body"
-msgstr ""
-
-#: judge/models/ticket.py:35
-msgid "message time"
-msgstr ""
-
-#: judge/models/ticket.py:38
-msgid "ticket message"
-msgstr ""
-
-#: judge/models/ticket.py:39
-msgid "ticket messages"
 msgstr ""
 
 #: judge/ratings.py:194
@@ -3667,56 +3604,6 @@ msgstr ""
 #: judge/views/submission.py:651 judge/views/submission.py:672
 #, python-brace-format
 msgid "{user}'s submissions for problem {number} in {contest}"
-msgstr ""
-
-#: judge/views/ticket.py:33 judge/views/ticket.py:39
-msgid "Ticket title"
-msgstr ""
-
-#: judge/views/ticket.py:40
-msgid "Issue description"
-msgstr ""
-
-#: judge/views/ticket.py:48
-msgid "You must solve at least one problem before you can create a ticket."
-msgstr ""
-
-#: judge/views/ticket.py:91 judge/views/ticket.py:94
-#, python-format
-msgid "New ticket for %s"
-msgstr ""
-
-#: judge/views/ticket.py:148
-#, python-format
-msgid "%(title)s - Ticket %(id)d"
-msgstr ""
-
-#: judge/views/ticket.py:255
-#, python-format
-msgid "Tickets - Page %(number)d of %(total)d"
-msgstr ""
-
-#: judge/views/ticket.py:307
-#, python-format
-msgid "New Ticket: %s"
-msgstr ""
-
-#: judge/views/ticket.py:308
-#, python-format
-msgid "#%(id)d, assigned to: %(users)s"
-msgstr ""
-
-#: judge/views/ticket.py:310
-msgid ", "
-msgstr ""
-
-#: judge/views/ticket.py:310
-msgid "no one"
-msgstr ""
-
-#: judge/views/ticket.py:330
-#, python-format
-msgid "New Ticket Message For: %s"
 msgstr ""
 
 #: judge/views/two_factor.py:50

@@ -5,7 +5,7 @@ from datetime import timedelta
 from operator import itemgetter
 from random import randrange
 from statistics import mean, median
-
+from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -37,7 +37,6 @@ from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
 from judge.utils.problems import contest_attempted_ids, contest_completed_ids, hot_problems, user_attempted_ids, \
     user_completed_ids
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
-from judge.utils.tickets import own_ticket_filter
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
 from judge.views.recommend import RecommendationList
 
@@ -175,12 +174,7 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
 
         can_edit = self.object.is_editable_by(user)
         context['can_edit_problem'] = can_edit
-        if user.is_authenticated:
-            tickets = self.object.tickets
-            if not can_edit:
-                tickets = tickets.filter(own_ticket_filter(user.profile.id))
-            context['has_tickets'] = tickets.exists()
-            context['num_open_tickets'] = tickets.filter(is_open=True).values('id').distinct().count()
+        
 
         try:
             context['editorial'] = Solution.objects.get(problem=self.object)
@@ -814,7 +808,7 @@ class RandomProblem(ProblemList):
             return HttpResponseRedirect('%s%s%s' % (reverse('problem_list'), request.META['QUERY_STRING'] and '?',
                                                     request.META['QUERY_STRING']))
         return HttpResponseRedirect(queryset[randrange(count)].get_absolute_url())
-
+@login_required
 def fake_problem_submit(request, problem):
     result = request.GET.get('result')
     if not result:
